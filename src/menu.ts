@@ -6,7 +6,7 @@ type MenuHandler = {
    * 1-based, to match the chord rule:
    * 1 => first menu, 2 => second menu, etc.
    */
-  menuByIndex(menuIndex: number): ReturnType<typeof run>;
+  (action: "by-index", menuIndex: number): ReturnType<typeof run>;
 
   /**
    * Lowercase-only query language:
@@ -23,17 +23,17 @@ type MenuHandler = {
    * - "z-o"   => 1st expanded menu item matching word-prefixes "z" + "o"
    * - "z-o2"  => 2nd expanded menu item matching word-prefixes "z" + "o"
    */
-  menuByLetters(query: string): ReturnType<typeof run>;
+  (action: "by-letters", query: string): ReturnType<typeof run>;
 };
 
 export default function buildMenuHandler(): MenuHandler {
   const runMenuAction = (
-    mode: "index" | "letters",
+    action: "by-index" | "by-letters",
     value: number | string,
   ) =>
     run(
       (
-        modeArg: "index" | "letters",
+        actionArg: "by-index" | "by-letters",
         valueArg: number | string,
       ) => {
         const log = (...args: any[]) => console.log("[JXA]", ...args);
@@ -58,9 +58,7 @@ export default function buildMenuHandler(): MenuHandler {
         };
 
         const getName = (item: any) =>
-          normalize(
-            safeCall(() => item.name(), ""),
-          );
+          normalize(safeCall(() => item.name(), ""));
 
         const getMenuBarItems = (menuBar: any) => {
           const items = safeCall(() => menuBar.menuBarItems(), []);
@@ -177,7 +175,10 @@ export default function buildMenuHandler(): MenuHandler {
           return null;
         };
 
-        const clickTopLevelMenuByIndex = (items: any[], oneBasedIndex: number) => {
+        const clickTopLevelMenuByIndex = (
+          items: any[],
+          oneBasedIndex: number,
+        ) => {
           if (!Number.isInteger(oneBasedIndex) || oneBasedIndex < 1) {
             throw new Error(
               `Expected menuIndex to be a positive integer, got: ${oneBasedIndex}`,
@@ -197,15 +198,23 @@ export default function buildMenuHandler(): MenuHandler {
             `menuBarItems[${zeroBasedIndex}]`,
           );
 
-          log(`Clicking top-level menu #${oneBasedIndex}:`, safeCall(() => item.name(), "<unknown>"));
+          log(
+            `Clicking top-level menu #${oneBasedIndex}:`,
+            safeCall(() => item.name(), "<unknown>"),
+          );
           item.click();
         };
 
-        const clickTopLevelMenuByRepeatedLetters = (items: any[], query: string) => {
+        const clickTopLevelMenuByRepeatedLetters = (
+          items: any[],
+          query: string,
+        ) => {
           const prefix = query[0]!;
           const occurrence = query.length;
 
-          const matches = items.filter((item) => getName(item).startsWith(prefix));
+          const matches = items.filter((item) =>
+            getName(item).startsWith(prefix),
+          );
 
           log(
             `Top-level repeated-letter query "${query}" -> prefix "${prefix}", occurrence ${occurrence}`,
@@ -222,7 +231,10 @@ export default function buildMenuHandler(): MenuHandler {
           }
 
           const item = matches[occurrence - 1]!;
-          log(`Clicking top-level menu:`, safeCall(() => item.name(), "<unknown>"));
+          log(
+            `Clicking top-level menu:`,
+            safeCall(() => item.name(), "<unknown>"),
+          );
           item.click();
         };
 
@@ -236,9 +248,15 @@ export default function buildMenuHandler(): MenuHandler {
           }
 
           const { pattern, occurrence } = parseExpandedItemQuery(query);
-          const selectedMenuName = safeCall(() => selected.menuBarItem.name(), "<unknown>");
+          const selectedMenuName = safeCall(
+            () => selected.menuBarItem.name(),
+            "<unknown>",
+          );
+
           log(`Expanded menu context: "${selectedMenuName}"`);
-          log(`Expanded-item query "${query}" -> pattern "${pattern}", occurrence ${occurrence}`);
+          log(
+            `Expanded-item query "${query}" -> pattern "${pattern}", occurrence ${occurrence}`,
+          );
 
           const allItems = collectMenuItemsDepthFirst(selected.menu);
 
@@ -261,7 +279,10 @@ export default function buildMenuHandler(): MenuHandler {
           }
 
           const item = candidates[occurrence - 1]!;
-          log(`Clicking expanded menu item:`, safeCall(() => item.name(), "<unknown>"));
+          log(
+            `Clicking expanded menu item:`,
+            safeCall(() => item.name(), "<unknown>"),
+          );
           item.click();
         };
 
@@ -277,7 +298,7 @@ export default function buildMenuHandler(): MenuHandler {
         const menuBar = assertExists(proc.menuBars[0], "menuBars[0]");
         const items = getMenuBarItems(menuBar);
 
-        if (modeArg === "index") {
+        if (actionArg === "by-index") {
           clickTopLevelMenuByIndex(items, Number(valueArg));
           log("Done");
           return;
@@ -303,17 +324,12 @@ export default function buildMenuHandler(): MenuHandler {
         clickExpandedMenuItemByQuery(items, query);
         log("Done");
       },
-      mode,
+      action,
       value,
     );
 
-  return {
-    menuByIndex(menuIndex: number) {
-      return runMenuAction("index", menuIndex);
-    },
+  const menu = ((action: "by-index" | "by-letters", value: number | string) =>
+    runMenuAction(action, value)) as MenuHandler;
 
-    menuByLetters(query: string) {
-      return runMenuAction("letters", query);
-    },
-  };
+  return menu;
 }

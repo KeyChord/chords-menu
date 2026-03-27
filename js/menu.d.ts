@@ -4,7 +4,7 @@ type MenuHandler = {
      * 1-based, to match the chord rule:
      * 1 => first menu, 2 => second menu, etc.
      */
-    menuByIndex(menuIndex: number): ReturnType<typeof run>;
+    (action: "by-index", menuIndex: number): ReturnType<typeof run>;
     /**
      * Lowercase-only query language:
      *
@@ -20,7 +20,7 @@ type MenuHandler = {
      * - "z-o"   => 1st expanded menu item matching word-prefixes "z" + "o"
      * - "z-o2"  => 2nd expanded menu item matching word-prefixes "z" + "o"
      */
-    menuByLetters(query: string): ReturnType<typeof run>;
+    (action: "by-letters", query: string): ReturnType<typeof run>;
 };
 export default function buildMenuHandler(): MenuHandler;
 export {};

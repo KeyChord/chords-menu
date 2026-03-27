@@ -77,7 +77,7 @@ function executeInOsa(code, args) {
 //#endregion
 //#region src/menu.ts
 function buildMenuHandler() {
-	const runMenuAction = (mode, value) => run((modeArg, valueArg) => {
+	const runMenuAction = (action, value) => run((actionArg, valueArg) => {
 		const log = (...args) => console.log("[JXA]", ...args);
 		const normalize = (s) => String(s).replace(/[\u200B-\u200F\uFEFF\u202A-\u202E]/g, "").trim().toLowerCase();
 		const assertExists = (obj, label) => {
@@ -196,7 +196,7 @@ function buildMenuHandler() {
 		const proc = assertExists(Application("System Events").processes.whose({ frontmost: true })[0], "frontmost process");
 		log("Frontmost process:", safeCall(() => proc.name(), "<unknown>"));
 		const items = getMenuBarItems(assertExists(proc.menuBars[0], "menuBars[0]"));
-		if (modeArg === "index") {
+		if (actionArg === "by-index") {
 			clickTopLevelMenuByIndex(items, Number(valueArg));
 			log("Done");
 			return;
@@ -215,15 +215,9 @@ function buildMenuHandler() {
 		}
 		clickExpandedMenuItemByQuery(items, query);
 		log("Done");
-	}, mode, value);
-	return {
-		menuByIndex(menuIndex) {
-			return runMenuAction("index", menuIndex);
-		},
-		menuByLetters(query) {
-			return runMenuAction("letters", query);
-		}
-	};
+	}, action, value);
+	const menu = ((action, value) => runMenuAction(action, value));
+	return menu;
 }
 //#endregion
 export { buildMenuHandler as default };
