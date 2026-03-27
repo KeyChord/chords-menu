@@ -75,7 +75,7 @@ function executeInOsa(code, args) {
 	});
 }
 //#endregion
-//#region js/menu.ts
+//#region src/menu.ts
 function buildMenuHandler() {
 	const runMenuAction = (mode, value) => run((modeArg, valueArg) => {
 		const log = (...args) => console.log("[JXA]", ...args);

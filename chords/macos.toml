@@ -3,7 +3,7 @@ name = "macOS Menu Bar"
 
 [config.js]
 module = '''
-import buildMenuHandler from '#exports/menu.js';
+import buildMenuHandler from '#js/menu.js';
 export const { menuByIndex, menuByLetters } = buildMenuHandler();
 '''
 
