@@ -6,6 +6,9 @@
   "imports": {
     "#exports/*": "./exports/*"
   },
+  "exports": {
+    "./*": "./exports/*"
+  },
   "dependencies": {
     "jxa-run-compat": "^1.6.0"
   },
