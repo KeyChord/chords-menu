@@ -4,6 +4,10 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@keychord/tsconfig': link:../../../../Library/pnpm/global/5/node_modules/@keychord/tsconfig
+  '@keychord/vite-plugin': link:../../../../Library/pnpm/global/5/node_modules/@keychord/vite-plugin
+
 importers:
 
   .:
@@ -15,6 +19,12 @@ importers:
       '@jxa/global-type':
         specifier: ^1.4.0
         version: 1.4.0
+      '@keychord/tsconfig':
+        specifier: link:../../../../Library/pnpm/global/5/node_modules/@keychord/tsconfig
+        version: link:../../../../Library/pnpm/global/5/node_modules/@keychord/tsconfig
+      '@keychord/vite-plugin':
+        specifier: link:../../../../Library/pnpm/global/5/node_modules/@keychord/vite-plugin
+        version: link:../../../../Library/pnpm/global/5/node_modules/@keychord/vite-plugin
 
 packages:
 
