@@ -7,6 +7,6 @@ Chord package for the macOS menu bar (excluding the tray, which is handled by [@
 ### buildMenuHandler() from `/js/menu.js`
 
 ```ts
-import buildMenuHandler from '@keychord/chords-menu/js/menu.js'
-const menu = buildMenuHandler()
+import buildMenuHandler from "@keychord/chords-menu/js/menu.js";
+const menu = buildMenuHandler();
 ```
