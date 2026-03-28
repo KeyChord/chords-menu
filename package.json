@@ -1,5 +1,6 @@
 {
   "name": "@keychord/chords-menu",
+  "type": "module",
   "version": "0.0.1",
   "dependencies": {
     "jxa-run-compat": "^1.6.0"
