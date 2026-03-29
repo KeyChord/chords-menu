@@ -1,7 +1,7 @@
 name = "macOS Menu Bar"
 
 [js]
-menu = 'menu.js'
+menu = ['']
 
 [chords]
 '?-' = { name = "Menu Bar" }

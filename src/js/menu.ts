@@ -26,7 +26,7 @@ type MenuHandler = {
   (action: "by-letters", query: string): ReturnType<typeof run>;
 };
 
-const runMenuAction = (action: "by-index" | "by-letters", value: number | string) =>
+const runMenuAction = (processName: string, action: "by-index" | "by-letters", value: number | string) =>
   run(
     (actionArg: "by-index" | "by-letters", valueArg: number | string) => {
       const log = (...args: any[]) => console.log("[JXA]", ...args);
@@ -258,6 +258,11 @@ const runMenuAction = (action: "by-index" | "by-letters", value: number | string
       };
 
       const se = Application("System Events");
+      if (processName) {
+        const app = Application(processName);
+        log("Activating app:", processName);
+        app.activate();
+      }
 
       const proc = assertExists(se.processes.whose({ frontmost: true })[0], "frontmost process");
 
@@ -299,6 +304,8 @@ const runMenuAction = (action: "by-index" | "by-letters", value: number | string
     value,
   );
 
-export default function menu(action: "by-index" | "by-letters", value: number | string) {
-  runMenuAction(action, value);
+export default function buildMenuHandler(processName: string) {
+  return function menu(action: "by-index" | "by-letters", value: number | string) {
+    runMenuAction(processName, action, value);
+  }
 }
