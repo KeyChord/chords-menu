@@ -1,3 +1,4 @@
 import  buildMenuHandler  from '../src/js/menu.ts'
 const menu= buildMenuHandler()
-await menu('by-index', 2)
+const result = await menu('by-index', "1")
+console.log(result)
