@@ -76,7 +76,7 @@ function executeInOsa(code, args) {
 }
 //#endregion
 //#region src/js/menu.ts
-const runMenuAction = (processName, action, value) => run((actionArg, valueArg) => {
+const runMenuAction = (processName, action, value) => run((processName, actionArg, valueArg) => {
 	const log = (...args) => console.log("[JXA]", ...args);
 	const normalize = (s) => String(s).replace(/[\u200B-\u200F\uFEFF\u202A-\u202E]/g, "").trim().toLowerCase();
 	const assertExists = (obj, label) => {
@@ -220,7 +220,7 @@ const runMenuAction = (processName, action, value) => run((actionArg, valueArg) 
 	}
 	clickExpandedMenuItemByQuery(items, query);
 	log("Done");
-}, action, value);
+}, processName, action, value);
 function buildMenuHandler(processName) {
 	return function menu(action, value) {
 		runMenuAction(processName, action, value);

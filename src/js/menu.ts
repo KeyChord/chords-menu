@@ -26,9 +26,9 @@ type MenuHandler = {
   (action: "by-letters", query: string): ReturnType<typeof run>;
 };
 
-const runMenuAction = (processName: string | undefined, action: "by-index" | "by-letters", value: number | string) =>
+const runMenuAction = (processName: string | undefined, action: "by-index" | "by-letters", value: string) =>
   run(
-    (actionArg: "by-index" | "by-letters", valueArg: number | string) => {
+    (processName, actionArg: "by-index" | "by-letters", valueArg: string) => {
       const log = (...args: any[]) => console.log("[JXA]", ...args);
 
       const normalize = (s: string) =>
@@ -300,12 +300,13 @@ const runMenuAction = (processName: string | undefined, action: "by-index" | "by
       clickExpandedMenuItemByQuery(items, query);
       log("Done");
     },
+    processName,
     action,
     value,
   );
 
 export default function buildMenuHandler(processName?: string) {
-  return function menu(action: "by-index" | "by-letters", value: number | string) {
+  return function menu(action: "by-index" | "by-letters", value: string) {
     runMenuAction(processName, action, value);
   }
 }
