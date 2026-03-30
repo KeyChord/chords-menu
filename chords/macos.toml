@@ -1,10 +1,11 @@
 name = "macOS Menu Bar"
 
-[js]
-menu = ['']
+[handlers.menu]
+file = "menu.js"
+args = []
 
 [chords]
 '?-' = { name = "Menu Bar" }
-'-0' = { name = "Menu Bar: Item 0 (Apple Logo)", 'js:menu' = [] }
-'-([1-9])' = { name = "Menu Bar: Item $1", 'js:menu' = ["by-index", "$1"] }
-'-([a-z]+[0-9]?)' = { name = "Menu Bar: By Letter $1", 'js:menu' = ["by-letters", "$1"] }
+'-0' = { name = "Menu Bar: Item 0 (Apple Logo)", 'emit:menu' = [] }
+'-([1-9])' = { name = "Menu Bar: Item $1", 'emit:menu' = ["by-index", "$1"] }
+'-([a-z]+[0-9]?)' = { name = "Menu Bar: By Letter $1", 'emit:menu' = ["by-letters", "$1"] }

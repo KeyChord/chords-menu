@@ -1,6 +1,82 @@
-import { run } from "jxa-run-compat";
+import { spawn } from "child_process";
+//#region node_modules/.pnpm/jxa-run-compat@1.6.0/node_modules/jxa-run-compat/lib/run.js
+function run(jxaCodeFunction, ...args) {
+	return executeInOsa(`
+ObjC.import('stdlib');
+var args = JSON.parse($.getenv('OSA_ARGS'));
+var fn   = (${jxaCodeFunction.toString()});
+var out  = fn.apply(null, args);
+JSON.stringify({ result: out });
+`, args);
+}
+const DEFAULT_MAX_BUFFER = 1e3 * 1e3 * 100;
+/**
+* execute the `code` in `osascript`
+*/
+function executeInOsa(code, args) {
+	return new Promise((resolve, reject) => {
+		const child = spawn("/usr/bin/osascript", ["-l", "JavaScript"], {
+			env: { OSA_ARGS: JSON.stringify(args) },
+			stdio: [
+				"pipe",
+				"pipe",
+				"pipe"
+			]
+		});
+		let stdoutBuffers = [];
+		let stderrBuffers = [];
+		let stdoutLength = 0;
+		let stderrLength = 0;
+		let done = false;
+		function finishError(err) {
+			if (done) return;
+			done = true;
+			reject(err);
+		}
+		function onData(chunk, buffers, currentLength, streamName) {
+			const nextLength = currentLength + chunk.length;
+			if (nextLength > DEFAULT_MAX_BUFFER) {
+				child.kill();
+				finishError(/* @__PURE__ */ new Error(`${streamName} maxBuffer length exceeded`));
+				return currentLength;
+			}
+			buffers.push(chunk);
+			return nextLength;
+		}
+		child.stdout.on("data", (chunk) => {
+			stdoutLength = onData(chunk, stdoutBuffers, stdoutLength, "stdout");
+		});
+		child.stderr.on("data", (chunk) => {
+			stderrLength = onData(chunk, stderrBuffers, stderrLength, "stderr");
+		});
+		child.on("error", (err) => {
+			finishError(err);
+		});
+		child.on("close", () => {
+			if (done) return;
+			const stdout = Buffer.concat(stdoutBuffers);
+			const stderr = Buffer.concat(stderrBuffers);
+			if (stderr.length) console.error(stderr.toString());
+			if (!stdout.length) {
+				done = true;
+				resolve(void 0);
+			}
+			try {
+				const result = JSON.parse(stdout.toString().trim()).result;
+				done = true;
+				resolve(result);
+			} catch (errorOutput) {
+				done = true;
+				resolve(stdout.toString().trim());
+			}
+		});
+		child.stdin.write(code);
+		child.stdin.end();
+	});
+}
+//#endregion
 //#region src/js/menu.ts
-const runMenuAction = (action, value) => run((actionArg, valueArg) => {
+const runMenuAction = (processName, action, value) => run((actionArg, valueArg) => {
 	const log = (...args) => console.log("[JXA]", ...args);
 	const normalize = (s) => String(s).replace(/[\u200B-\u200F\uFEFF\u202A-\u202E]/g, "").trim().toLowerCase();
 	const assertExists = (obj, label) => {
@@ -116,7 +192,13 @@ const runMenuAction = (action, value) => run((actionArg, valueArg) => {
 		log(`Clicking expanded menu item:`, safeCall(() => item.name(), "<unknown>"));
 		item.click();
 	};
-	const proc = assertExists(Application("System Events").processes.whose({ frontmost: true })[0], "frontmost process");
+	const se = Application("System Events");
+	if (processName) {
+		const app = Application(processName);
+		log("Activating app:", processName);
+		app.activate();
+	}
+	const proc = assertExists(se.processes.whose({ frontmost: true })[0], "frontmost process");
 	log("Frontmost process:", safeCall(() => proc.name(), "<unknown>"));
 	const items = getMenuBarItems(assertExists(proc.menuBars[0], "menuBars[0]"));
 	if (actionArg === "by-index") {
@@ -139,8 +221,10 @@ const runMenuAction = (action, value) => run((actionArg, valueArg) => {
 	clickExpandedMenuItemByQuery(items, query);
 	log("Done");
 }, action, value);
-function menu(action, value) {
-	runMenuAction(action, value);
+function buildMenuHandler(processName) {
+	return function menu(action, value) {
+		runMenuAction(processName, action, value);
+	};
 }
 //#endregion
-export { menu as default };
+export { buildMenuHandler as default };
