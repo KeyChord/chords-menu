@@ -164,23 +164,17 @@ async function runMenuAction(processName: string | undefined, action: "by-index"
         return null;
       };
 
-      const clickTopLevelMenuByIndex = (items: any[], oneBasedIndex: number) => {
-        if (!Number.isInteger(oneBasedIndex) || oneBasedIndex < 1) {
-          throw new Error(`Expected menuIndex to be a positive integer, got: ${oneBasedIndex}`);
-        }
-
-        const zeroBasedIndex = oneBasedIndex - 1;
-
+      const clickTopLevelMenuByIndex = (items: any[], zeroBasedIndex: number) => {
         if (zeroBasedIndex >= items.length) {
           throw new Error(
-            `menuIndex ${oneBasedIndex} out of range; found ${items.length} menu bar items`,
+            `menuIndex ${zeroBasedIndex} out of range; found ${items.length} menu bar items`,
           );
         }
 
         const item = assertExists(items[zeroBasedIndex], `menuBarItems[${zeroBasedIndex}]`);
 
         log(
-          `Clicking top-level menu #${oneBasedIndex}:`,
+          `Clicking top-level menu #${zeroBasedIndex}:`,
           safeCall(() => item.name(), "<unknown>"),
         );
         item.click();
