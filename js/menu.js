@@ -156,12 +156,10 @@ async function runMenuAction(processName, action, value) {
 			}
 			return null;
 		};
-		const clickTopLevelMenuByIndex = (items, oneBasedIndex) => {
-			if (!Number.isInteger(oneBasedIndex) || oneBasedIndex < 1) throw new Error(`Expected menuIndex to be a positive integer, got: ${oneBasedIndex}`);
-			const zeroBasedIndex = oneBasedIndex - 1;
-			if (zeroBasedIndex >= items.length) throw new Error(`menuIndex ${oneBasedIndex} out of range; found ${items.length} menu bar items`);
+		const clickTopLevelMenuByIndex = (items, zeroBasedIndex) => {
+			if (zeroBasedIndex >= items.length) throw new Error(`menuIndex ${zeroBasedIndex} out of range; found ${items.length} menu bar items`);
 			const item = assertExists(items[zeroBasedIndex], `menuBarItems[${zeroBasedIndex}]`);
-			log(`Clicking top-level menu #${oneBasedIndex}:`, safeCall(() => item.name(), "<unknown>"));
+			log(`Clicking top-level menu #${zeroBasedIndex}:`, safeCall(() => item.name(), "<unknown>"));
 			item.click();
 		};
 		const clickTopLevelMenuByRepeatedLetters = (items, query) => {
