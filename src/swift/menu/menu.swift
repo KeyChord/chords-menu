@@ -3,14 +3,8 @@
 // Behaviour mirrors the query language documented in `readme.md`, talking to the Accessibility
 // API directly so a keystroke costs a few AX calls rather than an `osascript` round trip.
 //
-// This file is compiled into `target/<triple>/menu/menu.dylib` (see `@keychord/config`),
-// which `src/js/menu.ts` opens with `bun:ffi`. The C ABI it exports:
-//
-//   const char *chordsMenuRun(const char *process_name /* nullable */, const char *action,
-//                               const char *value);
-//     Runs one menu action. Returns NULL on success, otherwise a heap-allocated error message
-//     that the caller releases with `chordsMenuFree`.
-//   void chordsMenuFree(char *message);
+// `@keychord/config` compiles this file into a NodeSwift addon at
+// `target/<triple>/menu/menu.node`; `src/js/menu.ts` loads it through Node-API.
 //
 // Chord calls handlers from its JS worker thread. The Accessibility client API and NSWorkspace
 // are usable from any thread, so the work stays on the calling thread — hopping to the main
@@ -19,6 +13,17 @@
 import AppKit
 import ApplicationServices
 import Foundation
+import NodeAPI
+
+#NodeModule(exports: [
+    "runMenuAction": try NodeFunction {
+        (processName: String?, action: String, value: String) throws in
+        try autoreleasepool {
+            try runMenuAction(processName: processName, action: action, value: value)
+        }
+        return try NodeUndefined()
+    },
+])
 
 public enum MenuError: Error, CustomStringConvertible {
     case invalidAction(String)
@@ -59,45 +64,6 @@ public enum MenuError: Error, CustomStringConvertible {
             return "No expanded menu item match #\(occurrence) for pattern \"\(pattern)\". Found \(found)."
         }
     }
-}
-
-// MARK: - C ABI (what `src/js/menu.ts` calls through `bun:ffi`)
-
-/// Runs one menu action. Returns `nil` on success or a `strdup`ed error message the caller frees
-/// with `chordsMenuFree`. Safe to call from any thread.
-@c
-public func chordsMenuRun(
-    _ processName: UnsafePointer<CChar>?,
-    _ action: UnsafePointer<CChar>?,
-    _ value: UnsafePointer<CChar>?
-) -> UnsafeMutablePointer<CChar>? {
-    let processName = processName.map { String(cString: $0) }.flatMap { $0.isEmpty ? nil : $0 }
-    let action = action.map { String(cString: $0) } ?? "by-index"
-    let value = value.map { String(cString: $0) } ?? "0"
-
-    return autoreleasepool {
-        do {
-            try runMenuAction(processName: processName, action: action, value: value)
-            return nil
-        } catch {
-            return strdup(describe(error))
-        }
-    }
-}
-
-@c
-public func chordsMenuFree(_ message: UnsafeMutablePointer<CChar>?) {
-    free(message)
-}
-
-private func describe(_ error: Error) -> String {
-    if let error = error as? MenuError {
-        return error.description
-    }
-    if let localized = error as? LocalizedError, let text = localized.errorDescription {
-        return text
-    }
-    return String(describing: error)
 }
 
 // MARK: - Accessibility helpers
@@ -295,7 +261,17 @@ private func waitBriefly(_ interval: TimeInterval) {
 /// frontmost.
 private func activate(processName: String) throws -> NSRunningApplication {
     let workspace = NSWorkspace.shared
-    var app = workspace.runningApplications.first { $0.localizedName == processName }
+    func resolveRunningApplication() -> NSRunningApplication? {
+        // Chord passes the bundle identifier captured when it resolved the chord. Prefer an active
+        // matching instance, but retain display-name lookup for public callers such as
+        // `buildMenuHandler("Safari")`.
+        let bundleMatches = NSRunningApplication.runningApplications(withBundleIdentifier: processName)
+        return bundleMatches.first(where: \.isActive)
+            ?? bundleMatches.first
+            ?? workspace.runningApplications.first { $0.localizedName == processName }
+    }
+
+    var app = resolveRunningApplication()
     if app == nil {
         log("Launching app: \(processName)")
         guard let url = workspace.urlForApplication(withBundleIdentifier: processName)
@@ -307,7 +283,7 @@ private func activate(processName: String) throws -> NSRunningApplication {
         let deadline = Date(timeIntervalSinceNow: 5)
         while app == nil && Date() < deadline {
             waitBriefly(0.05)
-            app = workspace.runningApplications.first { $0.localizedName == processName }
+            app = resolveRunningApplication()
         }
     }
     guard let app else {
@@ -340,8 +316,7 @@ private extension NSWorkspace {
     }
 }
 
-/// Public entry point so other packages can `import KeychordChordsMenuFfiMenu` and drive the
-/// menu bar with the same query language (`by-index` / `by-letters`). Callable from any thread.
+/// Drives the menu bar with the `by-index` / `by-letters` query language. Callable from any thread.
 public func runMenuAction(processName: String?, action: String, value: String) throws {
     let target: NSRunningApplication
     if let processName {
