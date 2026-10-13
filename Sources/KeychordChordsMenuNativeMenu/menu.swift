@@ -17,8 +17,10 @@ import NodeAPI
 
 #NodeModule(exports: [
     "runMenuAction": try NodeFunction {
-        (processName: String?, action: String, value: String) async throws in
-        try await runMenuAction(processName: processName, action: action, value: value)
+        (processName: String?, action: String, value: String) throws -> NodePromise in
+        try mainActorPromise {
+            try await runMenuAction(processName: processName, action: action, value: value)
+        }
     },
 ])
 
@@ -365,7 +367,7 @@ private extension NSWorkspace {
     }
 }
 
-/// Drives the menu bar on MainActor; callers on NodeActor await this operation.
+/// Drives the menu bar on MainActor; the JS entrypoint returns a Promise.
 @MainActor
 public func runMenuAction(processName: String?, action: String, value: String) async throws {
     let target: NSRunningApplication

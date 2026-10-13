@@ -13,7 +13,7 @@ test("the -0 binding sends index zero and preserves the captured application", a
   });
   const { default: buildMenuHandler } = await import("../src/js/menu.ts");
   const source = readFileSync(new URL("../chords/macos.toml", import.meta.url), "utf8");
-  const binding = source.match(/^'-0'.*'emit:menu' = \['by-index', '([0-9]+)'\]/m);
+  const binding = source.match(/^'-0'.*'@input:menu' = \['by-index', '([0-9]+)'\]/m);
   expect(binding?.[1]).toBe("0");
   const menu = buildMenuHandler();
   await menu.call({ focusedAppId: "dev.keychord.fixture" }, "by-index", binding![1]);

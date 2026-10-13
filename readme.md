@@ -47,7 +47,7 @@ build's CLI: `chord bun scripts/run.ts by-letters f`.
 
 ## Regression check
 
-After building, run `python3 tests/check.py /path/to/chord` from this package. It launches a
+After building, run `python3 __tests__/check.py /path/to/chord` from this package. It launches a
 temporary menu fixture app and verifies indices, repeated letters, expanded-item occurrences,
 word abbreviations, nested exact paths, invisible-title cleanup, disabled items, rejection, and
 captured app context. It also checks Apple menu selection by zero and excludes the system Apple

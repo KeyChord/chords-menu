@@ -1,9 +1,7 @@
 import { config } from "@keychord/config";
+import { chordTestRuntime } from "@keychord/chordtest/vitest";
 
-const base = config();
+const base = config({ native: { scratchDir: "node_modules/.cache/chord-native" } });
 
-// Chord attaches `import.meta.chord` as it loads each module; the test runner does not.
-// `tests/setup.ts` stands the namespace up before any module is imported.
-export default Object.assign(base, {
-  test: { setupFiles: ["./tests/setup.ts"] },
-});
+const runtime = chordTestRuntime();
+export default { ...base, ...runtime, plugins: [...(base.plugins ?? []), ...runtime.plugins] };
