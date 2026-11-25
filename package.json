@@ -1,0 +1,27 @@
+{
+  "name": "@keychord/chords-menu",
+  "displayName": "Menu Chords",
+  "version": "0.0.6",
+  "description": "System shortcuts for Linux and Windows, plus application menus and the menu bar on macOS.",
+  "categories": [
+    "macOS"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KeyChord/chords-menu"
+  },
+  "type": "module",
+  "imports": {
+    "#/*": "./src/js/*"
+  },
+  "scripts": {
+    "test": "bun test --isolate"
+  },
+  "devDependencies": {
+    "@keychord/chordtest": "workspace:*",
+    "@keychord/config": "catalog:",
+    "@keychord/tsconfig": "catalog:",
+    "@types/bun": "latest"
+  },
+  "packageManager": "pnpm@12.11.2"
+}
